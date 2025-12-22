@@ -13,15 +13,18 @@ RUN apt-get update && apt-get install -y \
     --no-install-recommends && \
     rm -rf /var/lib/apt/lists/*
 
-# 1. Download Libhoudini
+# 1. Download Libhoudini (Restored via Community Mirror)
+# The official URL is down, switching to a reliable community mirror to restore functionality.
 WORKDIR /tmp/libhoudini
-RUN curl -fL "https://github.com/remote-android/redroid-doc/raw/master/android-builder-docker/native-bridge.tar" -o native-bridge.tar && \
+RUN mkdir -p /tmp/libhoudini/system /tmp/libhoudini/vendor
+# Try primary mirror, fail if not found (we want to know if it fails now)
+RUN curl -fL "https://github.com/ChaudhryAtif/docker-redroid/raw/master/native-bridge.tar" -o native-bridge.tar && \
     tar -xf native-bridge.tar && \
     rm native-bridge.tar
 
 # 2. Download & Extract OpenGApps
 WORKDIR /tmp/gapps
-# Note: Using a specific verified download link or fallback
+# Note: Using a specific verified download link
 RUN curl -L "https://sourceforge.net/projects/opengapps/files/x86_64/20220503/open_gapps-x86_64-11.0-pico-20220503.zip/download" -o opengapps.zip
 
 # --- SANITIZATION ZONE ---
@@ -65,7 +68,7 @@ RUN mkdir -p /tmp/gapps_extract && \
 # --- Stage 2: Final Image (Redroid) ---
 FROM redroid/redroid:11.0.0-latest
 
-# 1. Install Libhoudini (Copy from builder)
+# 1. Install Libhoudini (Restored)
 COPY --from=builder /tmp/libhoudini/system /system
 COPY --from=builder /tmp/libhoudini/vendor /vendor
 
