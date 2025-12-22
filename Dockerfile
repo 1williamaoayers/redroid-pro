@@ -17,17 +17,28 @@ RUN apt-get update && apt-get install -y \
 # The user has locally extracted the files to ./libhoudini/
 # We will COPY them directly in the final stage.
 
-# 2. Reassemble Locally Split OpenGApps
+# 2. Reassemble Locally Split OpenGApps (Debug Mode)
 WORKDIR /tmp/gapps
-# Strategy: User has split the 123MB file into <50MB chunks to bypass GitHub limits.
-# We copy them and reassemble inside the container.
 COPY gapps_part_* /tmp/gapps_parts/
-RUN cat /tmp/gapps_parts/gapps_part_* > opengapps.zip && \
+# Reassemble to absolute path /tmp/opengapps.zip and verify size
+RUN cat /tmp/gapps_parts/gapps_part_* > /tmp/opengapps.zip && \
+    ls -lh /tmp/opengapps.zip && \
     rm -rf /tmp/gapps_parts
 
 # --- SANITIZATION ZONE ---
-# Copy scripts here first to fix Windows Line Endings (CRLF -> LF)
-COPY install_gapps.sh /scripts/install_gapps.sh
+# ... (scripts copy remains same) ...
+
+# Execute the extraction logic (Separate Step for clarity)
+# Using absolute path for input zip
+RUN mkdir -p /tmp/gapps_extract && \
+    unzip -q /tmp/opengapps.zip -d /tmp/gapps_extract && \
+    rm /tmp/opengapps.zip && \
+    # Rest of the extraction chain
+    lzip -d /tmp/gapps_extract/Core/google-play-services-x86_64-nodpi.tar.lz && \
+
+    # --- SANITIZATION ZONE ---
+    # Copy scripts here first to fix Windows Line Endings (CRLF -> LF)
+    COPY install_gapps.sh /scripts/install_gapps.sh
 COPY docker-entrypoint.sh /scripts/docker-entrypoint.sh
 # Use sed to remove carriage returns (\r) and make executable
 RUN sed -i 's/\r$//' /scripts/install_gapps.sh && \
@@ -40,7 +51,8 @@ RUN mkdir -p /output/system/priv-app && \
 
 # Execute the extraction logic
 RUN mkdir -p /tmp/gapps_extract && \
-    unzip -q opengapps.zip -d /tmp/gapps_extract && \
+    unzip -q /tmp/opengapps.zip -d /tmp/gapps_extract && \
+    rm /tmp/opengapps.zip && \
     # Extract GmsCore
     lzip -d /tmp/gapps_extract/Core/google-play-services-x86_64-nodpi.tar.lz && \
     tar -xf /tmp/gapps_extract/Core/google-play-services-x86_64-nodpi.tar -C /tmp/gapps_extract/Core/ && \
