@@ -14,23 +14,18 @@ RUN apt-get update && apt-get install -y \
     rm -rf /var/lib/apt/lists/*
 
 # 1. Download Libhoudini (Source: casualsnek/waydroid_script -> supremegamers)
-# Using the exact commit hash verified in waydroid_script for Android 11
+# 1. Download & Structure Libhoudini (Integrated Step)
+# This combines download and extraction to prevent "file not found" errors between layers
 WORKDIR /tmp/libhoudini
 RUN curl -L "https://github.com/supremegamers/vendor_intel_proprietary_houdini/archive/81f2a51ef539a35aead396ab7fce2adf89f46e88.zip" -o libhoudini.zip && \
-    unzip -q libhoudini.zip && \
-    rm libhoudini.zip
-
-# Structure Libhoudini for Final Stage
-# Use a "Blind Extraction" strategy to avoid guessing the folder name
-RUN mkdir -p /tmp/libhoudini_final && \
+    mkdir -p /tmp/libhoudini_final && \
     mkdir -p extraction && \
     unzip -q libhoudini.zip -d extraction && \
-    # We do not guess the directory name. We validly assume there is one folder inside.
-    # We move/copy its contents (system and vendor) to our final staging area.
+    # Blind extraction: move whatever is inside the first folder of the zip
     cp -r extraction/*/system /tmp/libhoudini_final/ && \
     cp -r extraction/*/vendor /tmp/libhoudini_final/ && \
-    # Cleanup
-    rm -rf extraction
+    rm -rf extraction && \
+    rm libhoudini.zip
 
 # 2. Download & Extract OpenGApps
 WORKDIR /tmp/gapps
