@@ -17,13 +17,10 @@ RUN apt-get update && apt-get install -y \
 # The user has locally extracted the files to ./libhoudini/
 # We will COPY them directly in the final stage.
 
-# 2. Reassemble Locally Split OpenGApps (Debug Mode)
+# 2. Download & Extract OpenGApps (Remote Master Mirror)
 WORKDIR /tmp/gapps
-COPY gapps_part_* /tmp/gapps_parts/
-# Reassemble to absolute path /tmp/opengapps.zip and verify size
-RUN cat /tmp/gapps_parts/gapps_part_* > /tmp/opengapps.zip && \
-    ls -lh /tmp/opengapps.zip && \
-    rm -rf /tmp/gapps_parts
+# Strategy: Direct download from SourceForge Master Mirror (Verified Usable)
+RUN curl -fL --retry 3 --retry-delay 5 "https://master.dl.sourceforge.net/project/opengapps/x86_64/20220503/open_gapps-x86_64-11.0-pico-20220503.zip?viasf=1" -o /tmp/opengapps.zip
 
 # --- SANITIZATION ZONE ---
 # ... (scripts copy remains same) ...
