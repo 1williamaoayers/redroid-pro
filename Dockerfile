@@ -33,7 +33,8 @@ RUN mkdir -p /tmp/libhoudini_final/system/lib/arm \
 # Since the structure of supremegamers repo matches /system and /vendor overlay:
 # Adjusting based on standard android overlay patterns found in the zip.
 # Assuming zip content: vendor_intel_proprietary_houdini-<commit>/...
-RUN mv vendor_intel_proprietary_houdini-81f2a51ef539a35aead396ab7fce2adf89f46e88 /tmp/houdini_src && \
+# Use wildcard (*) to reliably match the extracted directory regardless of hash length
+RUN mv vendor_intel_proprietary_houdini-* /tmp/houdini_src && \
     # Copy system libs
     cp -r /tmp/houdini_src/system /tmp/libhoudini_final/ && \
     # Copy vendor libs
