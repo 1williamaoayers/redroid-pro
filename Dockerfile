@@ -13,19 +13,9 @@ RUN apt-get update && apt-get install -y \
     --no-install-recommends && \
     rm -rf /var/lib/apt/lists/*
 
-# 1. Download Libhoudini (Source: casualsnek/waydroid_script -> supremegamers)
-# 1. Download & Structure Libhoudini (Integrated Step)
-# This combines download and extraction to prevent "file not found" errors between layers
-WORKDIR /tmp/libhoudini
-RUN curl -L "https://github.com/supremegamers/vendor_intel_proprietary_houdini/archive/81f2a51ef539a35aead396ab7fce2adf89f46e88.zip" -o libhoudini.zip && \
-    mkdir -p /tmp/libhoudini_final && \
-    mkdir -p extraction && \
-    unzip -q libhoudini.zip -d extraction && \
-    # Blind extraction: move whatever is inside the first folder of the zip
-    cp -r extraction/*/system /tmp/libhoudini_final/ && \
-    cp -r extraction/*/vendor /tmp/libhoudini_final/ && \
-    rm -rf extraction && \
-    rm libhoudini.zip
+# 1. Download Libhoudini (REMOVED - Using Local Resources)
+# The user has locally extracted the files to ./libhoudini/
+# We will COPY them directly in the final stage.
 
 # 2. Download & Extract OpenGApps
 WORKDIR /tmp/gapps
@@ -73,9 +63,9 @@ RUN mkdir -p /tmp/gapps_extract && \
 # --- Stage 2: Final Image (Redroid) ---
 FROM redroid/redroid:11.0.0-latest
 
-# 1. Install Libhoudini (Restored from Supremegamers)
-COPY --from=builder /tmp/libhoudini_final/system /system
-COPY --from=builder /tmp/libhoudini_final/vendor /vendor
+# 1. Install Libhoudini (Copy from Local Repo)
+# We copy the entire folder content to root, effectively overlaying /system and /vendor
+COPY libhoudini/ /
 
 # 2. Install GApps (Copy from builder)
 COPY --from=builder /output/system/priv-app /system/priv-app
