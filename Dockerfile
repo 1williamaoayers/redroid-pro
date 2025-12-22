@@ -14,7 +14,7 @@ RUN apt-get update && apt-get install -y \
 
 # 1. Download Libhoudini
 WORKDIR /tmp/libhoudini
-RUN curl -L "https://github.com/remote-android/redroid-doc/raw/master/android-builder-docker/native-bridge.tar" -o native-bridge.tar && \
+RUN curl -fL "https://github.com/remote-android/redroid-doc/raw/master/android-builder-docker/native-bridge.tar" -o native-bridge.tar && \
     tar -xf native-bridge.tar && \
     rm native-bridge.tar
 
