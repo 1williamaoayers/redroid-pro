@@ -23,20 +23,20 @@ WORKDIR /tmp/gapps
 # Note: Using a specific verified download link or fallback
 RUN curl -L "https://sourceforge.net/projects/opengapps/files/x86_64/20220503/open_gapps-x86_64-11.0-pico-20220503.zip/download" -o opengapps.zip
 
-# Copy install script to builder to help with extraction (if needed) or do it inline
-# Here we perform the heavy lifting of extraction in the builder stage
-COPY install_gapps.sh /usr/local/bin/install_gapps.sh
-RUN chmod +x /usr/local/bin/install_gapps.sh
+# --- SANITIZATION ZONE ---
+# Copy scripts here first to fix Windows Line Endings (CRLF -> LF)
+COPY install_gapps.sh /scripts/install_gapps.sh
+COPY docker-entrypoint.sh /scripts/docker-entrypoint.sh
+# Use sed to remove carriage returns (\r) and make executable
+RUN sed -i 's/\r$//' /scripts/install_gapps.sh && \
+    sed -i 's/\r$//' /scripts/docker-entrypoint.sh && \
+    chmod +x /scripts/install_gapps.sh /scripts/docker-entrypoint.sh
 
 # Structure the output directory
-mkdir -p /output/system/priv-app
-mkdir -p /output/system/lib/arm
+RUN mkdir -p /output/system/priv-app && \
+    mkdir -p /output/system/lib/arm
 
 # Execute the extraction logic
-# We need to adapt install_gapps.sh slightly or just run logical commands here.
-# For simplicity and robustness, let's execute a modified command sequence here or rely on the script if it doesn't depend on android paths.
-# Since install_gapps.sh was designed for Redroid, let's do manual extraction in Builder to be safe.
-
 RUN mkdir -p /tmp/gapps_extract && \
     unzip -q opengapps.zip -d /tmp/gapps_extract && \
     # Extract GmsCore
@@ -71,13 +71,15 @@ COPY --from=builder /tmp/libhoudini/vendor /vendor
 # 2. Install GApps (Copy from builder)
 COPY --from=builder /output/system/priv-app /system/priv-app
 
-# 3. Copy Configs & Scripts
+# 3. Copy Configs & Scripts (From Builder to ensure LF format)
 COPY privapp-permissions-google.xml /system/etc/permissions/privapp-permissions-google.xml
-COPY docker-entrypoint.sh /usr/local/bin/docker-entrypoint.sh
+COPY --from=builder /scripts/docker-entrypoint.sh /usr/local/bin/docker-entrypoint.sh
+COPY --from=builder /scripts/install_gapps.sh /usr/local/bin/install_gapps.sh
 
 # 4. Final Permissions & Properties
 RUN chown -R root:root /system/priv-app/ && \
     chmod 644 /system/priv-app/*/*.apk && \
+    # Entrypoint permissions are already set in builder, but ensuring here helps
     chmod +x /usr/local/bin/docker-entrypoint.sh && \
     # Fingerprint
     echo "ro.product.model=Pixel 3 XL" >> /system/build.prop && \

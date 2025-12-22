@@ -2,8 +2,8 @@ version: "3"
 services:
   redroid:
     container_name: redroid-pro
-    # Local Test: Uses the image name provided by the user in the batch script
-    image: ${REDROID_IMAGE:-ghcr.io/yourname/redroid-pro:latest}
+    # Image from GitHub Actions build
+    image: ghcr.io/1williamaoayers/redroid-pro:latest
     stdin_open: true
     tty: true
     privileged: true
