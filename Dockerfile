@@ -17,10 +17,13 @@ RUN apt-get update && apt-get install -y \
 # The user has locally extracted the files to ./libhoudini/
 # We will COPY them directly in the final stage.
 
-# 2. Download & Extract OpenGApps
+# 2. Reassemble Locally Split OpenGApps
 WORKDIR /tmp/gapps
-# Note: Using a specific verified download link
-RUN curl -L "https://sourceforge.net/projects/opengapps/files/x86_64/20220503/open_gapps-x86_64-11.0-pico-20220503.zip/download" -o opengapps.zip
+# Strategy: User has split the 123MB file into <50MB chunks to bypass GitHub limits.
+# We copy them and reassemble inside the container.
+COPY gapps_part_* /tmp/gapps_parts/
+RUN cat /tmp/gapps_parts/gapps_part_* > opengapps.zip && \
+    rm -rf /tmp/gapps_parts
 
 # --- SANITIZATION ZONE ---
 # Copy scripts here first to fix Windows Line Endings (CRLF -> LF)
