@@ -28,17 +28,9 @@ RUN cat /tmp/gapps_parts/gapps_part_* > /tmp/opengapps.zip && \
 # --- SANITIZATION ZONE ---
 # ... (scripts copy remains same) ...
 
-# Execute the extraction logic (Separate Step for clarity)
-# Using absolute path for input zip
-RUN mkdir -p /tmp/gapps_extract && \
-    unzip -q /tmp/opengapps.zip -d /tmp/gapps_extract && \
-    rm /tmp/opengapps.zip && \
-    # Rest of the extraction chain
-    lzip -d /tmp/gapps_extract/Core/google-play-services-x86_64-nodpi.tar.lz && \
-
-    # --- SANITIZATION ZONE ---
-    # Copy scripts here first to fix Windows Line Endings (CRLF -> LF)
-    COPY install_gapps.sh /scripts/install_gapps.sh
+# --- SANITIZATION ZONE ---
+# Copy scripts here first to fix Windows Line Endings (CRLF -> LF)
+COPY install_gapps.sh /scripts/install_gapps.sh
 COPY docker-entrypoint.sh /scripts/docker-entrypoint.sh
 # Use sed to remove carriage returns (\r) and make executable
 RUN sed -i 's/\r$//' /scripts/install_gapps.sh && \
