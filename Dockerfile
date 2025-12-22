@@ -13,14 +13,31 @@ RUN apt-get update && apt-get install -y \
     --no-install-recommends && \
     rm -rf /var/lib/apt/lists/*
 
-# 1. Download Libhoudini (Restored via Community Mirror)
-# The official URL is down, switching to a reliable community mirror to restore functionality.
+# 1. Download Libhoudini (Source: casualsnek/waydroid_script -> supremegamers)
+# Using the exact commit hash verified in waydroid_script for Android 11
 WORKDIR /tmp/libhoudini
-RUN mkdir -p /tmp/libhoudini/system /tmp/libhoudini/vendor
-# Try primary mirror, fail if not found (we want to know if it fails now)
-RUN curl -fL "https://github.com/ChaudhryAtif/docker-redroid/raw/master/native-bridge.tar" -o native-bridge.tar && \
-    tar -xf native-bridge.tar && \
-    rm native-bridge.tar
+RUN curl -L "https://github.com/supremegamers/vendor_intel_proprietary_houdini/archive/81f2a51ef539a35aead396ab7fce2adf89f46e88.zip" -o libhoudini.zip && \
+    unzip -q libhoudini.zip && \
+    rm libhoudini.zip
+
+# Structure Libhoudini for Final Stage
+# The zip extracts to a folder name based on commit hash
+# We need to consolidate it into /tmp/libhoudini_final
+RUN mkdir -p /tmp/libhoudini_final/system/lib/arm \
+    /tmp/libhoudini_final/system/lib64/arm64 \
+    /tmp/libhoudini_final/vendor/etc
+
+# Move files (Logic adapted from waydroid_script)
+# The repo structure is flat or specific, we assume the houdini files are inside "4081..." folder.
+# We move the entire content to appropriate places.
+# Since the structure of supremegamers repo matches /system and /vendor overlay:
+# Adjusting based on standard android overlay patterns found in the zip.
+# Assuming zip content: vendor_intel_proprietary_houdini-<commit>/...
+RUN mv vendor_intel_proprietary_houdini-81f2a51ef539a35aead396ab7fce2adf89f46e88 /tmp/houdini_src && \
+    # Copy system libs
+    cp -r /tmp/houdini_src/system /tmp/libhoudini_final/ && \
+    # Copy vendor libs
+    cp -r /tmp/houdini_src/vendor /tmp/libhoudini_final/
 
 # 2. Download & Extract OpenGApps
 WORKDIR /tmp/gapps
@@ -68,9 +85,9 @@ RUN mkdir -p /tmp/gapps_extract && \
 # --- Stage 2: Final Image (Redroid) ---
 FROM redroid/redroid:11.0.0-latest
 
-# 1. Install Libhoudini (Restored)
-COPY --from=builder /tmp/libhoudini/system /system
-COPY --from=builder /tmp/libhoudini/vendor /vendor
+# 1. Install Libhoudini (Restored from Supremegamers)
+COPY --from=builder /tmp/libhoudini_final/system /system
+COPY --from=builder /tmp/libhoudini_final/vendor /vendor
 
 # 2. Install GApps (Copy from builder)
 COPY --from=builder /output/system/priv-app /system/priv-app
