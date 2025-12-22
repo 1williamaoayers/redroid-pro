@@ -1,0 +1,68 @@
+version: "3"
+services:
+  redroid:
+    container_name: redroid-pro
+    # Local Test: Uses the image name provided by the user in the batch script
+    image: ${REDROID_IMAGE:-ghcr.io/yourname/redroid-pro:latest}
+    stdin_open: true
+    tty: true
+    privileged: true
+    ports:
+      - "5555:5555"
+    volumes:
+      - redroid-data:/data
+    environment:
+      # --- 🚀 终极普惠配置 (Project Dream) ---
+
+      # 1. 穷人救星：开启 Android Go 模式 (适合 2G/4G 内存机器)
+      - ENABLE_LOW_RAM=true
+
+      # 2. 智能网络：自动寻找宿主机代理 (无需填写 IP)
+      # 只要你的 V2RayA 监听在 20171，这里留空即可自动连接！
+      - PROXY_HOST=
+      - PROXY_PORT=20171
+
+    command:
+      # 分辨率设置为 720P，兼顾画质与流畅度
+      - androidboot.redroid_width=720
+      - androidboot.redroid_height=1280
+      - androidboot.redroid_dpi=320
+      - androidboot.redroid_fps=30
+      # 限制堆内存，防止 OOM
+      - androidboot.redroid_vm_heap=256m
+    # 资源限制防炸机
+    deploy:
+      resources:
+        limits:
+          memory: 4G
+    restart: unless-stopped
+
+  syncthing:
+    container_name: redroid-sync
+    image: syncthing/syncthing
+    environment:
+      - PUID=0
+      - PGID=0
+    volumes:
+      - redroid-data:/var/syncthing/android_data
+    ports:
+      - "8384:8384"
+      - "22000:22000/tcp"
+      - "22000:22000/udp"
+      - "21027:21027/udp"
+    restart: unless-stopped
+
+  scrcpy-web:
+    container_name: redroid-web
+    image: emptysuns/scrcpy-web:v0.1
+    ports:
+      - "8000:8000"
+    command: [ "adb", "connect", "redroid:5555" ]
+    depends_on:
+      - redroid
+    environment:
+      - USE_H264=true
+    restart: unless-stopped
+
+volumes:
+  redroid-data:

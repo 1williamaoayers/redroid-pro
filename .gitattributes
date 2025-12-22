@@ -1,0 +1,19 @@
+# 强制所有文本文件使用 Linux (LF) 换行，防止 Docker/VPS 报错
+* text=auto eol=lf
+
+# 只有 Windows 脚本保留 CRLF
+*.bat text eol=crlf
+*.cmd text eol=crlf
+*.ps1 text eol=crlf
+
+# 二进制文件保护 (APK, 密钥, 图片) - 绝对不让 Git 修改
+*.apk binary
+*.aab binary
+*.jar binary
+*.keystore binary
+*.jks binary
+*.png binary
+*.jpg binary
+*.jpeg binary
+*.gif binary
+*.ico binary
