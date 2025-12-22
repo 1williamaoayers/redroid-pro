@@ -21,24 +21,16 @@ RUN curl -L "https://github.com/supremegamers/vendor_intel_proprietary_houdini/a
     rm libhoudini.zip
 
 # Structure Libhoudini for Final Stage
-# The zip extracts to a folder name based on commit hash
-# We need to consolidate it into /tmp/libhoudini_final
-RUN mkdir -p /tmp/libhoudini_final/system/lib/arm \
-    /tmp/libhoudini_final/system/lib64/arm64 \
-    /tmp/libhoudini_final/vendor/etc
-
-# Move files (Logic adapted from waydroid_script)
-# The repo structure is flat or specific, we assume the houdini files are inside "4081..." folder.
-# We move the entire content to appropriate places.
-# Since the structure of supremegamers repo matches /system and /vendor overlay:
-# Adjusting based on standard android overlay patterns found in the zip.
-# Assuming zip content: vendor_intel_proprietary_houdini-<commit>/...
-# Use wildcard (*) to reliably match the extracted directory regardless of hash length
-RUN mv vendor_intel_proprietary_houdini-* /tmp/houdini_src && \
-    # Copy system libs
-    cp -r /tmp/houdini_src/system /tmp/libhoudini_final/ && \
-    # Copy vendor libs
-    cp -r /tmp/houdini_src/vendor /tmp/libhoudini_final/
+# Use a "Blind Extraction" strategy to avoid guessing the folder name
+RUN mkdir -p /tmp/libhoudini_final && \
+    mkdir -p extraction && \
+    unzip -q libhoudini.zip -d extraction && \
+    # We do not guess the directory name. We validly assume there is one folder inside.
+    # We move/copy its contents (system and vendor) to our final staging area.
+    cp -r extraction/*/system /tmp/libhoudini_final/ && \
+    cp -r extraction/*/vendor /tmp/libhoudini_final/ && \
+    # Cleanup
+    rm -rf extraction
 
 # 2. Download & Extract OpenGApps
 WORKDIR /tmp/gapps
