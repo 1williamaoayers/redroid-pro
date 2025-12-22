@@ -5,6 +5,7 @@ FROM ubuntu:22.04 AS builder
 # Install tools
 ENV DEBIAN_FRONTEND=noninteractive
 RUN apt-get update && apt-get install -y \
+    ca-certificates \
     curl \
     unzip \
     lzip \
