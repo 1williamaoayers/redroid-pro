@@ -28,12 +28,12 @@ jobs:
           echo "📦 验证合并后的文件..."
           ls -lh opengapps.zip
           
-          # 验证文件完整性
-          if [ -s opengapps.zip ]; then
-            echo "✅ 合并成功！"
-            unzip -t opengapps.zip > /dev/null && echo "✅ ZIP 文件完整性验证通过"
+          # 验证文件非空且大小合理 (>100MB)
+          FILE_SIZE=$(stat -c%s opengapps.zip)
+          if [ "$FILE_SIZE" -gt 100000000 ]; then
+            echo "✅ 合并成功！文件大小: $FILE_SIZE bytes"
           else
-            echo "❌ 合并失败：文件为空"
+            echo "❌ 合并失败：文件太小 ($FILE_SIZE bytes)"
             exit 1
           fi
 
