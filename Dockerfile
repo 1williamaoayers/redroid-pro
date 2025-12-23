@@ -43,26 +43,30 @@ RUN mkdir -p /output/system/priv-app && \
 RUN mkdir -p /tmp/gapps_extract && \
     unzip -q /tmp/opengapps.zip -d /tmp/gapps_extract && \
     rm /tmp/opengapps.zip && \
-    # Extract GmsCore
-    lzip -d /tmp/gapps_extract/Core/google-play-services-x86_64-nodpi.tar.lz && \
-    tar -xf /tmp/gapps_extract/Core/google-play-services-x86_64-nodpi.tar -C /tmp/gapps_extract/Core/ && \
+    # Debug: List available files
+    echo "=== Available .tar.lz files ===" && \
+    find /tmp/gapps_extract -name "*.tar.lz" && \
+    echo "===============================" && \
+    # Extract GmsCore (Play Services)
+    lzip -d /tmp/gapps_extract/Core/gmscore-x86_64.tar.lz && \
+    tar -xf /tmp/gapps_extract/Core/gmscore-x86_64.tar -C /tmp/gapps_extract/Core/ && \
     mkdir -p /output/system/priv-app/PrebuiltGmsCore && \
-    cp $(find /tmp/gapps_extract/Core/google-play-services-x86_64-nodpi -name "*.apk" | head -n 1) /output/system/priv-app/PrebuiltGmsCore/PrebuiltGmsCore.apk && \
-    # Extract Gsf
-    lzip -d /tmp/gapps_extract/Core/google-services-framework.tar.lz && \
-    tar -xf /tmp/gapps_extract/Core/google-services-framework.tar -C /tmp/gapps_extract/Core/ && \
+    cp $(find /tmp/gapps_extract/Core -path "*gmscore*" -name "*.apk" | head -n 1) /output/system/priv-app/PrebuiltGmsCore/PrebuiltGmsCore.apk && \
+    # Extract GSF (Google Services Framework)
+    lzip -d /tmp/gapps_extract/Core/gsfcore-all.tar.lz && \
+    tar -xf /tmp/gapps_extract/Core/gsfcore-all.tar -C /tmp/gapps_extract/Core/ && \
     mkdir -p /output/system/priv-app/GoogleServicesFramework && \
-    cp $(find /tmp/gapps_extract/Core/google-services-framework -name "*.apk" | head -n 1) /output/system/priv-app/GoogleServicesFramework/GoogleServicesFramework.apk && \
-    # Extract Phonesky
-    lzip -d /tmp/gapps_extract/Core/vending.tar.lz && \
-    tar -xf /tmp/gapps_extract/Core/vending.tar -C /tmp/gapps_extract/Core/ && \
+    cp $(find /tmp/gapps_extract/Core -path "*gsfcore*" -name "*.apk" | head -n 1) /output/system/priv-app/GoogleServicesFramework/GoogleServicesFramework.apk && \
+    # Extract Phonesky (Play Store)
+    lzip -d /tmp/gapps_extract/Core/vending-x86_64.tar.lz && \
+    tar -xf /tmp/gapps_extract/Core/vending-x86_64.tar -C /tmp/gapps_extract/Core/ && \
     mkdir -p /output/system/priv-app/Phonesky && \
-    cp $(find /tmp/gapps_extract/Core/vending -name "*.apk" | head -n 1) /output/system/priv-app/Phonesky/Phonesky.apk && \
+    cp $(find /tmp/gapps_extract/Core -path "*vending*" -name "*.apk" | head -n 1) /output/system/priv-app/Phonesky/Phonesky.apk && \
     # Extract ConfigUpdater
-    lzip -d /tmp/gapps_extract/Core/configupdater.tar.lz && \
-    tar -xf /tmp/gapps_extract/Core/configupdater.tar -C /tmp/gapps_extract/Core/ && \
+    lzip -d /tmp/gapps_extract/Core/configupdater-all.tar.lz && \
+    tar -xf /tmp/gapps_extract/Core/configupdater-all.tar -C /tmp/gapps_extract/Core/ && \
     mkdir -p /output/system/priv-app/ConfigUpdater && \
-    cp $(find /tmp/gapps_extract/Core/configupdater -name "*.apk" | head -n 1) /output/system/priv-app/ConfigUpdater/ConfigUpdater.apk
+    cp $(find /tmp/gapps_extract/Core -path "*configupdater*" -name "*.apk" | head -n 1) /output/system/priv-app/ConfigUpdater/ConfigUpdater.apk
 
 
 # --- Stage 2: Final Image (Redroid) ---
