@@ -61,7 +61,7 @@ RUN sed -i 's/\r$//' /output/scripts/*.sh && \
 
 
 # --- Stage 2: Final Image (Redroid) ---
-# 注意：Redroid 镜像的 /system 是只读的，只能用 COPY 命令
+# 注意：Redroid 镜像没有 /bin/sh，只能用 COPY 命令添加文件，不能运行脚本
 FROM redroid/redroid:11.0.0-latest
 
 # 1. 安装 Libhoudini（从本地仓库复制）
@@ -70,13 +70,9 @@ COPY libhoudini/ /
 # 2. 安装 GApps（从 builder 复制）
 COPY --from=builder /output/system/priv-app /system/priv-app
 
-# 3. 复制配置和脚本
+# 3. 复制配置文件
 COPY privapp-permissions-google.xml /system/etc/permissions/privapp-permissions-google.xml
-COPY --from=builder /output/scripts/docker-entrypoint.sh /usr/local/bin/docker-entrypoint.sh
-COPY --from=builder /output/scripts/install_gapps.sh /usr/local/bin/install_gapps.sh
 
-# 注意：不能在此使用 RUN 命令修改 /system，因为它是只读的
-# 设备指纹等配置需要在容器运行时通过 setprop 命令设置
+# 注意：Redroid 没有标准 Linux shell (/bin/sh)，使用原生 /init
+# 设备指纹通过 docker-compose command 参数传递
 
-# 设置入口点
-ENTRYPOINT ["/usr/local/bin/docker-entrypoint.sh", "androidboot.hardware=redroid"]
