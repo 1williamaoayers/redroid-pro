@@ -20,20 +20,22 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@v3
 
-      - name: Install dependencies
-        run: sudo apt-get update && sudo apt-get install -y aria2
-
-      - name: Download Resources (Pre-Build)
+      - name: Merge GApps Split Files (合并本地拆分文件)
         run: |
-          echo "Downloading OpenGApps with aria2..."
-          # -x 10: 10 connections
-          # -s 10: 10 servers (split)
-          # -k 1M: Min split size
-          aria2c -x 10 -s 10 -k 1M -o opengapps.zip "https://master.dl.sourceforge.net/project/opengapps/x86_64/20220503/open_gapps-x86_64-11.0-pico-20220503.zip?viasf=1"
+          echo "🔧 合并本地 GApps 拆分文件..."
+          cat gapps_part_* > opengapps.zip
           
-          echo "Verifying file size..."
+          echo "📦 验证合并后的文件..."
           ls -lh opengapps.zip
-          if [ -s opengapps.zip ]; then echo "Download Success"; else echo "Download Failed"; exit 1; fi
+          
+          # 验证文件完整性
+          if [ -s opengapps.zip ]; then
+            echo "✅ 合并成功！"
+            unzip -t opengapps.zip > /dev/null && echo "✅ ZIP 文件完整性验证通过"
+          else
+            echo "❌ 合并失败：文件为空"
+            exit 1
+          fi
 
       - name: Log in to the Container registry
         uses: docker/login-action@v2
