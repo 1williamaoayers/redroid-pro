@@ -85,9 +85,14 @@ COPY --from=builder /scripts/docker-entrypoint.sh /usr/local/bin/docker-entrypoi
 COPY --from=builder /scripts/install_gapps.sh /usr/local/bin/install_gapps.sh
 
 # 4. Final Permissions & Properties
-RUN chown -R root:root /system/priv-app/ && \
-    chmod 644 /system/priv-app/*/*.apk && \
-    # Entrypoint permissions are already set in builder, but ensuring here helps
+RUN echo "=== Debug: Listing /system/priv-app contents ===" && \
+    ls -laR /system/priv-app/ || echo "priv-app directory may be empty" && \
+    echo "================================================" && \
+    # Set ownership
+    chown -R root:root /system/priv-app/ && \
+    # Use find instead of glob to avoid "no match" errors
+    find /system/priv-app -name "*.apk" -exec chmod 644 {} \; && \
+    # Entrypoint permissions
     chmod +x /usr/local/bin/docker-entrypoint.sh && \
     # Fingerprint
     echo "ro.product.model=Pixel 3 XL" >> /system/build.prop && \
