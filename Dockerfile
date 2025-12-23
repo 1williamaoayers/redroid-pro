@@ -17,15 +17,11 @@ RUN apt-get update && apt-get install -y \
 # The user has locally extracted the files to ./libhoudini/
 # We will COPY them directly in the final stage.
 
-# 2. Download & Extract OpenGApps (Remote Master Mirror)
+# 2. Extract OpenGApps (Pre-downloaded by GitHub Actions)
 WORKDIR /tmp/gapps
-# Strategy: Direct download from SourceForge Master Mirror (Verified Usable)
-# We stick to the remote link but simulate a browser to avoid "landing page" HTML responses.
-RUN curl -fL --retry 3 --retry-delay 5 \
-    -H "User-Agent: Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36" \
-    "https://master.dl.sourceforge.net/project/opengapps/x86_64/20220503/open_gapps-x86_64-11.0-pico-20220503.zip?viasf=1" \
-    -o /tmp/opengapps.zip && \
-    ls -lh /tmp/opengapps.zip
+# Strategy: File is downloaded in the Workflow (build.yml) and passed to Docker context.
+COPY opengapps.zip /tmp/opengapps.zip
+RUN ls -lh /tmp/opengapps.zip
 
 # --- SANITIZATION ZONE ---
 # ... (scripts copy remains same) ...
