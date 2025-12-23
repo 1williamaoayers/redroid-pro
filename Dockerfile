@@ -20,7 +20,12 @@ RUN apt-get update && apt-get install -y \
 # 2. Download & Extract OpenGApps (Remote Master Mirror)
 WORKDIR /tmp/gapps
 # Strategy: Direct download from SourceForge Master Mirror (Verified Usable)
-RUN curl -fL --retry 3 --retry-delay 5 "https://master.dl.sourceforge.net/project/opengapps/x86_64/20220503/open_gapps-x86_64-11.0-pico-20220503.zip?viasf=1" -o /tmp/opengapps.zip
+# We stick to the remote link but simulate a browser to avoid "landing page" HTML responses.
+RUN curl -fL --retry 3 --retry-delay 5 \
+    -H "User-Agent: Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36" \
+    "https://master.dl.sourceforge.net/project/opengapps/x86_64/20220503/open_gapps-x86_64-11.0-pico-20220503.zip?viasf=1" \
+    -o /tmp/opengapps.zip && \
+    ls -lh /tmp/opengapps.zip
 
 # --- SANITIZATION ZONE ---
 # ... (scripts copy remains same) ...
