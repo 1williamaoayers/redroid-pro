@@ -1,63 +1,66 @@
-#!/bin/bash
+#!/system/bin/sh
 
-# --- 1. Android Go Optimization (Low RAM Mode) ---
+# ==============================================================================
+# Redroid Pro 启动脚本
+# 在容器运行时配置设备指纹和网络
+# ==============================================================================
+
+# --- 1. 设置设备指纹（伪装为 Pixel 3 XL）---
+# 使用 setprop 命令（在运行时设置系统属性）
+echo "[CloudVerse] 📱 Setting device fingerprint..."
+setprop ro.product.model "Pixel 3 XL"
+setprop ro.product.brand "google"
+setprop ro.product.name "crosshatch"
+setprop ro.product.device "crosshatch"
+setprop ro.product.manufacturer "Google"
+setprop ro.build.fingerprint "google/crosshatch/crosshatch:11/RQ3A.211001.001/7641976:user/release-keys"
+
+# --- 2. Android Go Optimization (Low RAM Mode) ---
 if [ "$ENABLE_LOW_RAM" = "true" ]; then
-    echo "[Dream] 🚀 Enabling Android Go (Low RAM) optimizations..."
-    # Enable Low RAM flag
-    echo "ro.config.low_ram=true" >> /system/build.prop
-    # Disable heavy features
-    echo "config.disable_consumerir=true" >> /system/build.prop
-    echo "config.disable_location=true" >> /system/build.prop
+    echo "[CloudVerse] 🚀 Enabling Android Go (Low RAM) optimizations..."
+    setprop ro.config.low_ram true
+    setprop config.disable_consumerir true
 fi
 
-# --- 2. Smart Protocol Discovery ---
-# Default to provided env or fallback to gateway
+# --- 3. Smart Network Configuration ---
 PROXY_PORT=${PROXY_PORT:-"20171"}
 
-# Function to get default gateway
 get_gateway() {
-    ip route show | grep default | awk '{print $3}'
+    ip route show 2>/dev/null | grep default | awk '{print $3}'
 }
 
-# Start background configuration daemon
+# 后台配置网络（等待 Android 完全启动）
 (
-    echo "[Dream] 📡 Waiting for Android system..."
+    echo "[CloudVerse] 📡 Waiting for Android system to boot..."
     while [ "$(getprop sys.boot_completed)" != "1" ]; do
         sleep 2
     done
 
     DETECTED_IP=""
     
-    # Strategy 1: Check Env Var PROXY_HOST first
     if [ ! -z "$PROXY_HOST" ]; then
-        echo "[Dream] 🎯 Using configured PROXY_HOST: $PROXY_HOST"
+        echo "[CloudVerse] 🎯 Using configured PROXY_HOST: $PROXY_HOST"
         DETECTED_IP=$PROXY_HOST
     else
-        # Strategy 2: Auto-detect Gateway
         GATEWAY_IP=$(get_gateway)
-        echo "[Dream] 🛰️ Auto-detected Gateway IP: $GATEWAY_IP"
-        
-        # Simple connectivity check (requires netcat/nc, usually available or use pure bash)
-        # Here we assume blindly it is the host for "Dream" simplicity unless we install nc
+        echo "[CloudVerse] 🛰️ Auto-detected Gateway IP: $GATEWAY_IP"
         DETECTED_IP=$GATEWAY_IP
     fi
 
-    echo "[Dream] 🔌 Configuring Global Proxy to $DETECTED_IP:$PROXY_PORT..."
+    if [ ! -z "$DETECTED_IP" ]; then
+        echo "[CloudVerse] 🔌 Configuring Global Proxy to $DETECTED_IP:$PROXY_PORT..."
+        for i in 1 2 3 4 5; do
+            settings put global http_proxy "${DETECTED_IP}:${PROXY_PORT}" 2>/dev/null && break
+            sleep 3
+        done
+        echo "[CloudVerse] ✅ Proxy Configured!"
+    fi
     
-    # Retry loop to ensure settings provider is ready
-    for i in {1..10}; do
-        settings put global http_proxy "${DETECTED_IP}:${PROXY_PORT}"
-        if [ $? -eq 0 ]; then
-            echo "[Dream] ✅ Proxy Configured Successfully!"
-            echo "[Dream] 🌍 You are now connected to the world."
-            break
-        fi
-        sleep 3
-    done
-    
-    # Optional: Set Public DNS for reliability
+    # 设置 DNS
     setprop net.dns1 223.5.5.5
+    echo "[CloudVerse] 🌍 Network configuration complete!"
 ) &
 
-# Exec original init
+# --- 4. 启动 Android 系统 ---
+echo "[CloudVerse] 🚀 Starting Android..."
 exec /init "$@"
